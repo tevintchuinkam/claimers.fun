@@ -22,7 +22,7 @@ func NewGameService(store models.Repository) *GameService {
 // NewGame creates a new game session and board, with
 // an optional board size (default is DEFAULT_BOARD_SIZE)
 // with the corresponding initialized tiles
-func (s *GameService) NewGame(boardSize ...int) (models.GameSession, error) {
+func (s *GameService) NewGame(boardSize ...int) (models.GameSession, models.Board, []models.Tile, error) {
 	b := DEFAULT_BOARD_SIZE
 	if len(boardSize) > 0 {
 		b = int64(boardSize[0])
@@ -34,13 +34,13 @@ func (s *GameService) NewGame(boardSize ...int) (models.GameSession, error) {
 	}
 	err := s.Store.BoardCreate(board)
 	if err != nil {
-		return models.GameSession{}, fmt.Errorf("failed to create board: %w", err)
+		return models.GameSession{}, models.Board{}, []models.Tile{}, fmt.Errorf("failed to create board: %w", err)
 	}
 	// create the tiles for the board
-	tiles := make([]*models.Tile, b*b)
+	tiles := make([]models.Tile, b*b)
 	for x := int64(0); x < b; x++ {
 		for y := int64(0); y < b; y++ {
-			tiles = append(tiles, &models.Tile{
+			tiles = append(tiles, models.Tile{
 				ID:       uuid.New(),
 				BoardID:  board.ID,
 				Position: models.Position{X: null.IntFrom(x), Y: null.IntFrom(y)},
@@ -49,7 +49,7 @@ func (s *GameService) NewGame(boardSize ...int) (models.GameSession, error) {
 	}
 	err = s.Store.BoardTileCreateMany(tiles)
 	if err != nil {
-		return models.GameSession{}, fmt.Errorf("failed to create tiles: %w", err)
+		return models.GameSession{}, models.Board{}, []models.Tile{}, fmt.Errorf("failed to create tiles: %w", err)
 	}
 	gameSession := &models.GameSession{
 		ID:        uuid.New(),
@@ -57,7 +57,7 @@ func (s *GameService) NewGame(boardSize ...int) (models.GameSession, error) {
 		StartTime: null.TimeFrom(time.Now()),
 	}
 
-	return s.Store.GameSessionCreate(gameSession)
+	return *gameSession, *board, tiles, nil
 }
 
 func (s *GameService) CreatePlayer(gamerName string) (models.Player, error) {

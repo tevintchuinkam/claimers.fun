@@ -142,15 +142,15 @@ func (t *TempStorage) BoardCreate(board *models.Board) error {
 	return nil
 }
 
-func (t *TempStorage) BoardTileCreateMany(tiles []*models.Tile) error {
+func (t *TempStorage) BoardTileCreateMany(tiles []models.Tile) error {
 	for _, tile := range tiles {
-		t.tiles[tile.ID] = tile
+		t.tiles[tile.ID] = &tile
 	}
 	for _, tile := range tiles {
 		if t.boardTiles[tile.BoardID] == nil {
 			t.boardTiles[tile.BoardID] = []*models.Tile{}
 		}
-		t.boardTiles[tile.BoardID] = append(t.boardTiles[tile.BoardID], tile)
+		t.boardTiles[tile.BoardID] = append(t.boardTiles[tile.BoardID], &tile)
 	}
 	return nil
 }

@@ -19,6 +19,10 @@ type Board struct {
 	SizeY null.Int  `db:"size_y"`
 }
 
+func (b Board) Size() (int, int) {
+	return int(b.SizeX.ValueOrZero()), int(b.SizeY.ValueOrZero())
+}
+
 type Player struct {
 	ID        uuid.UUID
 	GamerName null.String
@@ -64,7 +68,7 @@ type Repository interface {
 
 	// BoardTile
 	BoardTileCreate(tile *Tile) error
-	BoardTileCreateMany(tiles []*Tile) error
+	BoardTileCreateMany(tiles []Tile) error
 	BoardTileGet(boardTileID uuid.UUID) (*Tile, error)
 	BoardTileUpdate(boardTileID uuid.UUID, update func(tile *Tile) (Tile, error)) error
 	BoardTileDelete(boardTileID uuid.UUID) error
