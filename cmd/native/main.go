@@ -11,16 +11,44 @@ import (
 )
 
 const (
-	windowWidth  = 1024
-	windowHeight = 768
+	windowWidth     int     = 1024
+	windowHeight    int     = 768
+	tileMarginRatio float64 = 0.05
 )
 
 type Game struct {
 	Session models.GameSession
 	Board   models.Board
-	Tiles   []models.Tile
+	Tiles   []Tile
 	Players []models.Player
 	Image   *ebiten.Image
+}
+
+type Tile struct {
+	BoardSizeX int64
+	BoardSizeY int64
+	Tile       models.Tile
+}
+
+func (t Tile) Update() error {
+	return nil
+}
+
+func (t Tile) Position() (int, int) {
+	return int(t.Tile.Position.X.ValueOrZero()), int(t.Tile.Position.Y.ValueOrZero())
+}
+
+func (t Tile) Draw(screen *ebiten.Image) {
+	i, j := t.Position()
+	tileWidth := (float64(windowWidth) / float64(t.BoardSizeX))
+	tileHeight := (float64(windowHeight) / float64(t.BoardSizeY))
+	op := &ebiten.DrawImageOptions{}
+	x := int(float64(i) * tileWidth)
+	y := int(float64(j) * tileHeight)
+	op.GeoM.Translate(float64(x), float64(y))
+	tileImage := ebiten.NewImage(int(tileWidth), int(tileHeight))
+	tileImage.Fill(design.TileColor)
+	screen.DrawImage(tileImage, op)
 }
 
 func main() {
@@ -63,7 +91,11 @@ func (g Game) Draw(screen *ebiten.Image) {
 	y := (sh - bh) / 2
 	op.GeoM.Translate(float64(x), float64(y))
 
-	screen.DrawImage(g.Image, op)
+	// now we need to draw all the tiles onto the board
+	for _, tile := range g.Tiles {
+		tile.Draw(screen)
+	}
+
 }
 
 func NewGame(gameService *services.GameService) (Game, error) {
@@ -91,10 +123,16 @@ func NewGame(gameService *services.GameService) (Game, error) {
 		log.Fatalf("failed to add player to game session: %v", err)
 	}
 
+	// now we need to create the game image
+	tileObjects := make([]Tile, len(tiles))
+	for i, tile := range tiles {
+		tileObjects[i] = Tile{Tile: tile, BoardSizeX: board.SizeX.ValueOrZero(), BoardSizeY: board.SizeY.ValueOrZero()}
+	}
+
 	game := Game{
 		Session: gameSession,
 		Board:   board,
-		Tiles:   tiles,
+		Tiles:   tileObjects,
 		Players: []models.Player{player1, player2},
 	}
 
