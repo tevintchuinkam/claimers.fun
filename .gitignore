@@ -1,0 +1,24 @@
+cmd/web/node_modules
+
+# Output
+cmd/web/.output
+cmd/web/.vercel
+cmd/web/.netlify
+cmd/web/.wrangler
+cmd/web/.svelte-kit
+cmd/web/build
+
+# OS
+cmd/web/.DS_Store
+cmd/web/Thumbs.db
+
+# Env
+**.env
+**.env.*
+!.env.example
+cmd/web!.env.test
+
+# Vite
+cmd/web/vite.config.js.timestamp-*
+cmd/web/vite.config.ts.timestamp-*
+
